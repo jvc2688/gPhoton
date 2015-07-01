@@ -12,4 +12,4 @@ Million, C., Fleming, S. W., Shiao, B. (2014) gPhoton. Software available at htt
 ![Logo](https://travis-ci.org/cmillion/gPhoton.svg?branch=master)
 
 Forked from https://github.com/cmillion/gPhoton
-Make it adaptable to Galex scan mode data
+Make it adaptable to GALEX scan mode data
