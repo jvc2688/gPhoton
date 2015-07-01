@@ -414,19 +414,26 @@ def PhotonPipe(raw6file,scstfile,band,outbase,aspfile=0,ssdfile=0,
 		ix = np.where(cut==True)[0]
 
 		print_inline(chunkid+"Interpolating aspect solutions...")
-		dxi,deta = np.zeros(len(t)),np.zeros(len(t))
-		dxi[ix] = (
-		  (xi_vec[aspix[ix]+1]-xi_vec[aspix[ix]])*(t[ix]-asptime[aspix[ix]])/
-									(asptime[aspix[ix]+1]-asptime[aspix[ix]]))
-		deta[ix]= (
-		  (eta_vec[aspix[ix]+1]-eta_vec[aspix[ix]])*(t[ix]-asptime[aspix[ix]])/
-									(asptime[aspix[ix]+1]-asptime[aspix[ix]]))
+		dra,ddec,droll = np.zeros(len(t)),np.zeros(len(t)), np.zeros(len(t))
+		dra[ix] = (aspra[aspix[ix]+1]-aspra[aspix[ix]])*(t[ix]-asptime[aspix[ix]])/(asptime[aspix[ix]+1]-asptime[aspix[ix]])
+		ddec[ix]= (aspdec[aspix[ix]+1]-aspdec[aspix[ix]])*(t[ix]-asptime[aspix[ix]])/(asptime[aspix[ix]+1]-asptime[aspix[ix]])
+		droll[ix] = (asptwist[aspix[ix]+1]-asptwist[aspix[ix]])*(t[ix]-asptime[aspix[ix]])/(asptime[aspix[ix]+1]-asptime[aspix[ix]])
+
+		ra_corr, dec_corr, roll_corr = np.zeros(len(t)), np.zeros(len(t)), np.zeros(len(t))
+		ra_corr[ix], dec_corr[ix], roll_corr[ix] = aspra[aspix[ix]]+dra[ix],aspdec[aspix[ix]]+ddec[ix], asptwist[aspix[ix]]+droll[ix]
+
+		t_uni, uni_index = np.unique(t[ix], True)
+		tmp_solution = np.zeros((t_uni.shape[0], 4))
+		tmp_solution[:,0] = t_uni
+		tmp_solution[:,1] = ra_corr[ix][uni_index]
+		tmp_solution[:,2] = dec_corr[ix][uni_index]
+		tmp_solution[:,3] = roll_corr[ix][uni_index]
+		asp_solutions.append(tmp_solution)
 
 		print_inline(chunkid+"Mapping to sky...")
 		ra,dec = np.zeros(len(t)),np.zeros(len(t))
-		ra[ix], dec[ix] = gnomrev_simple(
-			xi[ix]+dxi[ix],eta[ix]+deta[ix],aspra[aspix[ix]],
-							aspdec[aspix[ix]],-asptwist[aspix[ix]],1/36000.,0.)
+		ra[ix], dec[ix] = gnomrev_simple(xi[ix],eta[ix],ra_corr[ix],
+							dec_corr[ix],-asptwist[aspix[ix]],1/36000.,0.)
 
 		cut =  ( ((asptime[aspix[ix]+1]-asptime[aspix[ix]])==1) &
 				  (aspflags[aspix[ix]]%2==0) & (aspflags[aspix[ix]+1]%2==0) &
@@ -468,6 +475,8 @@ def PhotonPipe(raw6file,scstfile,band,outbase,aspfile=0,ssdfile=0,
 				spreadsheet.writerow([int(t[i]*dbscale),x[i],y[i],xa[i],ya[i],
 									q[i],xi[i],eta[i],ra[i],dec[i],flags[i]])
 
+	asp_solution = np.concatenate(asp_solutions, axis=0)
+	np.save(outbase+'_asp.npy', asp_solution)
 	raw6hdulist.close()
 	stopt = time.time()
 
