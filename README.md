@@ -10,3 +10,6 @@ If you use gPhoton software in your research, please cite:
 Million, C., Fleming, S. W., Shiao, B. (2014) gPhoton. Software available at https://github.com/cmillion/gPhoton
 
 ![Logo](https://travis-ci.org/cmillion/gPhoton.svg?branch=master)
+
+Forked from https://github.com/cmillion/gPhoton
+Make it adaptable to Galex scan mode data
